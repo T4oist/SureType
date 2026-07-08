@@ -15,13 +15,21 @@ public enum LogoStyle
     Mono
 }
 
+public enum AppLanguage
+{
+    Chinese,
+    English
+}
+
 public sealed class AppSettings
 {
     private double _overlayDurationSeconds = 1.5;
     private double _inputFocusCooldownSeconds = 8;
     private bool _showOnStateChange = true;
+    private bool _startWithWindows;
     private OverlayPosition _overlayPosition = OverlayPosition.TopRight;
     private LogoStyle _logoStyle = LogoStyle.Filled;
+    private AppLanguage _language = AppLanguage.Chinese;
 
     public event EventHandler? Changed;
 
@@ -43,6 +51,12 @@ public sealed class AppSettings
         set => SetValue(ref _showOnStateChange, value);
     }
 
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set => SetValue(ref _startWithWindows, value);
+    }
+
     public OverlayPosition OverlayPosition
     {
         get => _overlayPosition;
@@ -53,6 +67,12 @@ public sealed class AppSettings
     {
         get => _logoStyle;
         set => SetValue(ref _logoStyle, value);
+    }
+
+    public AppLanguage Language
+    {
+        get => _language;
+        set => SetValue(ref _language, value);
     }
 
     private void SetValue<T>(ref T field, T value)
