@@ -1,97 +1,34 @@
 # SureType
 
-SureType is a lightweight Windows tray app that shows the current input state before you type. It helps you avoid typing into a chat box or editor with the wrong Chinese/English mode or CapsLock state.
+SureType &#26159;&#19968;&#20010; Windows &#36755;&#20837;&#29366;&#24577;&#25552;&#31034;&#24037;&#20855;&#12290;&#23427;&#20250;&#22312;&#20320;&#20934;&#22791;&#36755;&#20837;&#26102;&#65292;&#29992;&#19968;&#20010;&#31616;&#27905;&#30340;&#23567; logo &#25552;&#37266;&#24403;&#21069;&#26159;&#20013;&#25991;&#12289;&#33521;&#25991;&#12289;&#23567;&#20889;&#36824;&#26159;&#22823;&#20889;&#12290;
 
-## Features
+## &#19979;&#36733;
 
-- Detects the active keyboard layout or input source for the foreground window.
-- Supports Chinese IME detection and tries to distinguish Chinese mode from English mode inside the Chinese IME.
-- Detects English lowercase and CapsLock uppercase states.
-- Shows a quiet top-right overlay when an input field is focused, with a cooldown so normal typing does not keep triggering popups.
-- Can optionally show the overlay when the input state or CapsLock state changes.
-- Runs from the system tray.
-- Double-click the tray icon, or choose `Open SureType`, to open the icon guide and settings window.
-- Supports Chinese and English interface text from the General settings page.
-- Can register SureType to start automatically with Windows for the current user.
-- The settings window opens automatically when SureType starts.
+&#28857;&#20987;&#19979;&#36733;&#65306;
 
-## Icon Guide
+[&#19979;&#36733; SureType.exe](https://github.com/T4oist/SureType/raw/main/download/SureType.exe)
 
-SureType uses simple, low-noise icons:
+&#36825;&#26159;&#33258;&#21253;&#21547;&#30340; Windows x64 &#21333;&#25991;&#20214;&#29256;&#26412;&#65292;&#30446;&#26631;&#30005;&#33041;&#19981;&#38656;&#35201;&#39069;&#22806;&#23433;&#35013; .NET&#12290;
 
-- Green `Chinese` icon: Chinese IME is in Chinese input mode.
-- Blue `EN` icon: a Chinese IME is active, but it is currently in English mode.
-- Gray `en` icon: English input with CapsLock off.
-- Dark `A` icon: English input with CapsLock on.
-- Brown `?` icon: SureType cannot read the current input state.
+## &#20351;&#29992;
 
-The icon resources live in `src/SureType/Resources/StatusAssets.xaml`.
+1. &#19979;&#36733; `SureType.exe`&#12290;
+2. &#21452;&#20987;&#36816;&#34892;&#12290;
+3. &#39318;&#27425;&#21551;&#21160;&#20250;&#33258;&#21160;&#25171;&#24320;&#35774;&#32622;&#30028;&#38754;&#12290;
+4. &#36816;&#34892;&#21518;&#20250;&#24120;&#39547;&#31995;&#32479;&#25176;&#30424;&#12290;
 
-## Settings
+## &#21151;&#33021;
 
-Open the SureType window from the tray menu to adjust:
+- &#26174;&#31034;&#24403;&#21069;&#36755;&#20837;&#29366;&#24577;&#65306;&#20013;&#25991;&#12289;&#20013;&#25991;&#36755;&#20837;&#27861;&#20869;&#33521;&#25991;&#12289;&#33521;&#25991;&#23567;&#20889;&#12289;&#33521;&#25991;&#22823;&#20889;&#12289;&#26410;&#30693;&#29366;&#24577;&#12290;
+- &#21487;&#20999;&#25442;&#20013;&#25991; / English &#30028;&#38754;&#12290;
+- &#21487;&#35774;&#32622; logo &#26174;&#31034;&#20301;&#32622;&#12289;&#26174;&#31034;&#26102;&#38388;&#12289;&#25552;&#31034;&#20919;&#21364;&#26102;&#38388;&#21644; logo &#26679;&#24335;&#12290;
+- &#21487;&#35774;&#32622;&#24320;&#26426;&#33258;&#21551;&#21160;&#12290;
+- &#21452;&#20987;&#25176;&#30424;&#22270;&#26631;&#21487;&#25171;&#24320;&#35774;&#32622;&#30028;&#38754;&#12290;
 
-- Language and startup behavior.
+## &#31995;&#32479;&#35201;&#27714;
 
-- Logo position: top right, top left, bottom right, or bottom left.
-- Display time.
-- Input-focus cooldown.
-- Logo style: Filled, Soft, or Mono.
-- Whether state changes should show the indicator.
+- Windows 10/11 x64
 
-Settings currently apply immediately for the running session. Persistent settings can be added later.
+## &#35828;&#26126;
 
-## Requirements
-
-- Windows 10/11 x64.
-- .NET 8 SDK for development.
-- The self-contained release executable does not require .NET to be installed on the target machine.
-
-## Build
-
-```powershell
-dotnet build
-```
-
-## Test
-
-```powershell
-dotnet run --project tests/SureType.Tests/SureType.Tests.csproj -c Release
-```
-
-The current tests cover input-state-to-icon mapping and the input-focus cooldown policy.
-
-## Package as a Single EXE
-
-```powershell
-.\publish-self-contained.ps1
-```
-
-Output:
-
-```text
-artifacts\SureType-win-x64-single-exe\SureType.exe
-```
-
-The package is a compressed, self-contained, single-file Windows x64 executable. If SureType is already running, exit it from the tray before packaging again, otherwise the old EXE may be locked and cannot be overwritten.
-
-## Current Limitations
-
-- Chinese IME Chinese/English mode depends on the standard Windows IMM/IME conversion mode. Some third-party IMEs may not expose this state.
-- Input-field focus detection uses Windows UI Automation. Most native and modern apps work, but some custom-drawn controls may not report focus correctly.
-- Windows x64 only.
-
-## Project Layout
-
-```text
-src/SureType/              WPF tray app
-src/SureType/Models/       input state and app settings
-src/SureType/Services/     input detection, focus hook, tray service
-src/SureType/Windows/      overlay and settings/guide windows
-src/SureType/Resources/    built-in icon resources
-tests/SureType.Tests/      lightweight test runner
-```
-
-## License
-
-No license has been selected yet.
+&#37096;&#20998;&#31532;&#19977;&#26041;&#36755;&#20837;&#27861;&#25110;&#33258;&#32472;&#36755;&#20837;&#26694;&#21487;&#33021;&#19981;&#26292;&#38706;&#26631;&#20934;&#36755;&#20837;&#29366;&#24577;&#65292;SureType &#20250;&#23613;&#37327;&#35782;&#21035;&#65292;&#26080;&#27861;&#35835;&#21462;&#26102;&#20250;&#26174;&#31034;&#26410;&#30693;&#29366;&#24577;&#12290;
