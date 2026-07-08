@@ -12,13 +12,14 @@ public partial class MainWindow : Window
     private readonly AppSettings _settings;
     private readonly InputStateService _inputStateService;
     private readonly OverlayWindow _overlayWindow;
-    private bool _isLoading;
+    private bool _isLoading = true;
 
     public MainWindow(AppSettings settings, InputStateService inputStateService, OverlayWindow overlayWindow)
     {
         _settings = settings;
         _inputStateService = inputStateService;
         _overlayWindow = overlayWindow;
+        _isLoading = true;
         InitializeComponent();
         LoadLegend();
         LoadSettings();
@@ -140,6 +141,11 @@ public partial class MainWindow : Window
 
     private void UpdateValueLabels()
     {
+        if (OverlayDurationValue is null || FocusCooldownValue is null)
+        {
+            return;
+        }
+
         OverlayDurationValue.Text = $"{_settings.OverlayDurationSeconds:0.0} s";
         FocusCooldownValue.Text = $"{_settings.InputFocusCooldownSeconds:0} s";
     }
