@@ -1,10 +1,27 @@
 namespace SureType.Models;
 
+public enum OverlayPosition
+{
+    TopRight,
+    TopLeft,
+    BottomRight,
+    BottomLeft
+}
+
+public enum LogoStyle
+{
+    Filled,
+    Soft,
+    Mono
+}
+
 public sealed class AppSettings
 {
     private double _overlayDurationSeconds = 1.5;
     private double _inputFocusCooldownSeconds = 8;
     private bool _showOnStateChange = true;
+    private OverlayPosition _overlayPosition = OverlayPosition.TopRight;
+    private LogoStyle _logoStyle = LogoStyle.Filled;
 
     public event EventHandler? Changed;
 
@@ -24,6 +41,18 @@ public sealed class AppSettings
     {
         get => _showOnStateChange;
         set => SetValue(ref _showOnStateChange, value);
+    }
+
+    public OverlayPosition OverlayPosition
+    {
+        get => _overlayPosition;
+        set => SetValue(ref _overlayPosition, value);
+    }
+
+    public LogoStyle LogoStyle
+    {
+        get => _logoStyle;
+        set => SetValue(ref _logoStyle, value);
     }
 
     private void SetValue<T>(ref T field, T value)

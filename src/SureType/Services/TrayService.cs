@@ -48,7 +48,7 @@ public sealed class TrayService : IDisposable
         _notifyIcon.DoubleClick += (_, _) => OpenMainWindow();
     }
 
-    private void OpenMainWindow()
+    public void OpenMainWindow()
     {
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {

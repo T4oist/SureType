@@ -29,6 +29,7 @@ public partial class App : System.Windows.Application
         };
 
         _inputStateService.Start();
+        _trayService.OpenMainWindow();
     }
 
     protected override void OnExit(System.Windows.ExitEventArgs e)

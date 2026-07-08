@@ -13,18 +13,22 @@
         Opacity="0"
         Visibility="Hidden">
     <Grid>
-        <Border Width="46"
+        <Border x:Name="StatusShell"
+                Width="46"
                 Height="46"
-                CornerRadius="16"
-                Background="#F7FAFAFA"
+                CornerRadius="14"
+                Background="#FF2E7D67"
                 BorderBrush="#22000000"
                 BorderThickness="1"
                 Effect="{DynamicResource StatusShadow}">
-            <Image x:Name="StatusImage"
-                   Width="30"
-                   Height="30"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality" />
+            <TextBlock x:Name="StatusText"
+                       Text="?"
+                       Foreground="White"
+                       FontFamily="Segoe UI, Microsoft YaHei UI"
+                       FontSize="17"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
         </Border>
     </Grid>
 </Window>

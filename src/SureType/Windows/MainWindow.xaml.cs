@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
+using MediaBrush = System.Windows.Media.Brush;
+using MediaBrushes = System.Windows.Media.Brushes;
 using SureType.Models;
 using SureType.Services;
 
@@ -20,26 +22,19 @@ public partial class MainWindow : Window
         InitializeComponent();
         LoadLegend();
         LoadSettings();
+        ShowSection(0);
     }
 
     private void LoadLegend()
     {
         LegendItems.ItemsSource = new[]
         {
-            CreateLegendItem(InputStateAssets.ChineseInput, "Chinese", "Chinese IME is in Chinese input mode."),
-            CreateLegendItem(InputStateAssets.ChineseImeEnglish, "IME English", "A Chinese IME is active, but it is currently in English mode."),
-            CreateLegendItem(InputStateAssets.EnglishLower, "English lower", "English keyboard or English input state with CapsLock off."),
-            CreateLegendItem(InputStateAssets.EnglishUpper, "English upper", "English input state with CapsLock on."),
-            CreateLegendItem(InputStateAssets.Unknown, "Unknown", "SureType cannot read the current input state from this app or IME.")
+            new LegendItem("CN", MediaBrushes.SeaGreen, "Chinese", "Chinese IME is in Chinese input mode."),
+            new LegendItem("EN", MediaBrushes.SteelBlue, "IME English", "A Chinese IME is active, but it is currently in English mode."),
+            new LegendItem("en", MediaBrushes.DimGray, "English lower", "English keyboard or English input state with CapsLock off."),
+            new LegendItem("A", MediaBrushes.DarkSlateGray, "English upper", "English input state with CapsLock on."),
+            new LegendItem("?", MediaBrushes.Sienna, "Unknown", "SureType cannot read the current input state from this app or IME.")
         };
-    }
-
-    private LegendItem CreateLegendItem(string assetKey, string title, string description)
-    {
-        return new LegendItem(
-            (ImageSource)System.Windows.Application.Current.FindResource(assetKey),
-            title,
-            description);
     }
 
     private void LoadSettings()
@@ -48,8 +43,61 @@ public partial class MainWindow : Window
         OverlayDurationSlider.Value = _settings.OverlayDurationSeconds;
         FocusCooldownSlider.Value = _settings.InputFocusCooldownSeconds;
         ShowOnStateChangeCheckBox.IsChecked = _settings.ShowOnStateChange;
+
+        TopLeftRadio.IsChecked = _settings.OverlayPosition == OverlayPosition.TopLeft;
+        TopRightRadio.IsChecked = _settings.OverlayPosition == OverlayPosition.TopRight;
+        BottomLeftRadio.IsChecked = _settings.OverlayPosition == OverlayPosition.BottomLeft;
+        BottomRightRadio.IsChecked = _settings.OverlayPosition == OverlayPosition.BottomRight;
+
+        FilledStyleRadio.IsChecked = _settings.LogoStyle == LogoStyle.Filled;
+        SoftStyleRadio.IsChecked = _settings.LogoStyle == LogoStyle.Soft;
+        MonoStyleRadio.IsChecked = _settings.LogoStyle == LogoStyle.Mono;
         _isLoading = false;
         UpdateValueLabels();
+    }
+
+    private void SectionList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        ShowSection(SectionList.SelectedIndex);
+    }
+
+    private void ShowSection(int index)
+    {
+        GuidePanel.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+        PositionPanel.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
+        TimingPanel.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
+        StylePanel.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void PositionRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_isLoading)
+        {
+            return;
+        }
+
+        _settings.OverlayPosition = sender switch
+        {
+            var value when ReferenceEquals(value, TopLeftRadio) => OverlayPosition.TopLeft,
+            var value when ReferenceEquals(value, BottomLeftRadio) => OverlayPosition.BottomLeft,
+            var value when ReferenceEquals(value, BottomRightRadio) => OverlayPosition.BottomRight,
+            _ => OverlayPosition.TopRight
+        };
+    }
+
+    private void StyleRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_isLoading)
+        {
+            return;
+        }
+
+        _settings.LogoStyle = sender switch
+        {
+            var value when ReferenceEquals(value, SoftStyleRadio) => LogoStyle.Soft,
+            var value when ReferenceEquals(value, MonoStyleRadio) => LogoStyle.Mono,
+            _ => LogoStyle.Filled
+        };
     }
 
     private void OverlayDurationSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -90,5 +138,5 @@ public partial class MainWindow : Window
         FocusCooldownValue.Text = $"{_settings.InputFocusCooldownSeconds:0} s";
     }
 
-    private sealed record LegendItem(ImageSource Asset, string Title, string Description);
+    private sealed record LegendItem(string Symbol, MediaBrush Background, string Title, string Description);
 }

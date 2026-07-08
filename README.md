@@ -11,6 +11,7 @@ SureType is a lightweight Windows tray app that shows the current input state be
 - Can optionally show the overlay when the input state or CapsLock state changes.
 - Runs from the system tray.
 - Double-click the tray icon, or choose `Open SureType`, to open the icon guide and settings window.
+- The settings window opens automatically when SureType starts.
 
 ## Icon Guide
 
@@ -28,8 +29,10 @@ The icon resources live in `src/SureType/Resources/StatusAssets.xaml`.
 
 Open the SureType window from the tray menu to adjust:
 
-- Indicator duration.
+- Logo position: top right, top left, bottom right, or bottom left.
+- Display time.
 - Input-focus cooldown.
+- Logo style: Filled, Soft, or Mono.
 - Whether state changes should show the indicator.
 
 Settings currently apply immediately for the running session. Persistent settings can be added later.
