@@ -8,18 +8,20 @@ public sealed class InputStateService : IDisposable
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(250);
 
     private readonly IInputStateReader _reader;
+    private readonly AppSettings _settings;
     private readonly DispatcherTimer _pollTimer;
     private ForegroundWindowHook? _foregroundWindowHook;
     private InputFocusHook? _inputFocusHook;
     private InputState _currentState = InputState.Unknown;
-    private readonly TypingCuePolicy _inputFocusCuePolicy = new(TimeSpan.FromSeconds(8));
+    private DateTimeOffset _lastInputFocusCueAt = DateTimeOffset.MinValue;
     private bool _disposed;
 
-    public InputStateService(IInputStateReader reader)
+    public InputStateService(IInputStateReader reader, AppSettings settings)
     {
         _reader = reader;
+        _settings = settings;
         _pollTimer = new DispatcherTimer { Interval = PollInterval };
-        _pollTimer.Tick += (_, _) => Refresh(true);
+        _pollTimer.Tick += (_, _) => Refresh(_settings.ShowOnStateChange);
     }
 
     public event EventHandler<InputStateChangedEventArgs>? StateChanged;
@@ -71,10 +73,14 @@ public sealed class InputStateService : IDisposable
 
     private void OnInputFocused()
     {
-        if (_inputFocusCuePolicy.ShouldCue(DateTimeOffset.UtcNow))
+        var now = DateTimeOffset.UtcNow;
+        if (now - _lastInputFocusCueAt <= TimeSpan.FromSeconds(_settings.InputFocusCooldownSeconds))
         {
-            Refresh(true, forceNotify: true);
+            return;
         }
+
+        _lastInputFocusCueAt = now;
+        Refresh(true, forceNotify: true);
     }
 
     public void Dispose()

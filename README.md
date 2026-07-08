@@ -1,79 +1,90 @@
 # SureType
 
-SureType 是一个轻量的 Windows 输入状态提示工具。它常驻系统托盘，在你进入输入框准备输入时，用屏幕右上角的一枚低打扰小图标提示当前输入状态，减少“先打几个字才发现中英文或大小写错了”的情况。
+SureType is a lightweight Windows tray app that shows the current input state before you type. It helps you avoid typing into a chat box or editor with the wrong Chinese/English mode or CapsLock state.
 
-## 功能
+## Features
 
-- 识别当前前台窗口的键盘布局/输入源。
-- 支持中文 IME，并尽量区分中文输入法内部的“中文模式 / 英文模式”。
-- 支持英文小写 / CapsLock 大写提示。
-- 只在一段时间内第一次进入输入框时显示提示，连续打字不会反复弹窗。
-- 输入法状态或 CapsLock 状态变化时会短暂提示。
-- 右上角浮层不抢焦点，不影响正常输入。
-- 系统托盘菜单支持暂停/恢复、手动显示当前状态、退出。
+- Detects the active keyboard layout or input source for the foreground window.
+- Supports Chinese IME detection and tries to distinguish Chinese mode from English mode inside the Chinese IME.
+- Detects English lowercase and CapsLock uppercase states.
+- Shows a quiet top-right overlay when an input field is focused, with a cooldown so normal typing does not keep triggering popups.
+- Can optionally show the overlay when the input state or CapsLock state changes.
+- Runs from the system tray.
+- Double-click the tray icon, or choose `Open SureType`, to open the icon guide and settings window.
 
-## 状态图标
+## Icon Guide
 
-第一版内置 5 种极简矢量状态图标：
+SureType uses simple, low-noise icons:
 
-- 中文输入
-- 中文输入法内英文模式
-- 英文小写
-- 英文大写
-- 未知/检测失败
+- Green `Chinese` icon: Chinese IME is in Chinese input mode.
+- Blue `EN` icon: a Chinese IME is active, but it is currently in English mode.
+- Gray `en` icon: English input with CapsLock off.
+- Dark `A` icon: English input with CapsLock on.
+- Brown `?` icon: SureType cannot read the current input state.
 
-图标资源位于 `src/SureType/Resources/StatusAssets.xaml`，后续可以替换为自定义 PNG/SVG 或新的 WPF 矢量图。
+The icon resources live in `src/SureType/Resources/StatusAssets.xaml`.
 
-## 系统要求
+## Settings
 
-- Windows 10/11 x64
-- 开发构建需要 .NET 8 SDK
-- 使用自包含发布包时，目标电脑不需要预装 .NET
+Open the SureType window from the tray menu to adjust:
 
-## 构建
+- Indicator duration.
+- Input-focus cooldown.
+- Whether state changes should show the indicator.
+
+Settings currently apply immediately for the running session. Persistent settings can be added later.
+
+## Requirements
+
+- Windows 10/11 x64.
+- .NET 8 SDK for development.
+- The self-contained release executable does not require .NET to be installed on the target machine.
+
+## Build
 
 ```powershell
 dotnet build
 ```
 
-## 运行测试
+## Test
 
 ```powershell
 dotnet run --project tests/SureType.Tests/SureType.Tests.csproj -c Release
 ```
 
-当前测试覆盖状态到图标资源的映射，以及输入框焦点提示的冷却策略。
+The current tests cover input-state-to-icon mapping and the input-focus cooldown policy.
 
-## 打包为单文件 EXE
+## Package as a Single EXE
 
 ```powershell
 .\publish-self-contained.ps1
 ```
 
-输出文件：
+Output:
 
 ```text
 artifacts\SureType-win-x64-single-exe\SureType.exe
 ```
 
-发布配置会生成自包含、单文件、压缩后的 Windows x64 EXE。当前体积约 `62.78 MB`。重新打包前请先从系统托盘退出正在运行的 SureType，否则旧的 `SureType.exe` 可能因被占用而无法覆盖。
+The package is a compressed, self-contained, single-file Windows x64 executable. If SureType is already running, exit it from the tray before packaging again, otherwise the old EXE may be locked and cannot be overwritten.
 
-## 当前局限
+## Current Limitations
 
-- 中文 IME 内部中英文模式依赖 Windows IMM/IME conversion mode。微软拼音等常见输入法通常可用，但部分第三方输入法可能不暴露标准状态，此时会回退到未知状态。
-- 输入框焦点识别基于 Windows UI Automation。大部分原生和现代应用可识别，少数自绘控件可能无法准确上报输入焦点。
-- 第一版只支持 Windows x64。
+- Chinese IME Chinese/English mode depends on the standard Windows IMM/IME conversion mode. Some third-party IMEs may not expose this state.
+- Input-field focus detection uses Windows UI Automation. Most native and modern apps work, but some custom-drawn controls may not report focus correctly.
+- Windows x64 only.
 
-## 开发结构
+## Project Layout
 
 ```text
-src/SureType/              WPF 托盘应用
-src/SureType/Services/     输入状态检测、焦点监听、托盘服务
-src/SureType/Windows/      右上角浮层窗口
-src/SureType/Resources/    内置状态图标资源
-tests/SureType.Tests/      轻量测试入口
+src/SureType/              WPF tray app
+src/SureType/Models/       input state and app settings
+src/SureType/Services/     input detection, focus hook, tray service
+src/SureType/Windows/      overlay and settings/guide windows
+src/SureType/Resources/    built-in icon resources
+tests/SureType.Tests/      lightweight test runner
 ```
 
 ## License
 
-暂未指定许可证。
+No license has been selected yet.

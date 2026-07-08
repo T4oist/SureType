@@ -16,14 +16,15 @@ public partial class OverlayWindow : Window
     private const int WsExToolwindow = 0x00000080;
     private const int WsExNoactivate = 0x08000000;
     private const int OverlayMargin = 24;
-    private static readonly TimeSpan VisibleDuration = TimeSpan.FromMilliseconds(1500);
 
+    private readonly AppSettings _settings;
     private readonly DispatcherTimer _hideTimer;
 
-    public OverlayWindow()
+    public OverlayWindow(AppSettings settings)
     {
+        _settings = settings;
         InitializeComponent();
-        _hideTimer = new DispatcherTimer { Interval = VisibleDuration };
+        _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(_settings.OverlayDurationSeconds) };
         _hideTimer.Tick += (_, _) => FadeOut();
     }
 
@@ -46,6 +47,7 @@ public partial class OverlayWindow : Window
 
             Visibility = Visibility.Visible;
             _hideTimer.Stop();
+            _hideTimer.Interval = TimeSpan.FromSeconds(_settings.OverlayDurationSeconds);
             BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(110)));
             _hideTimer.Start();
         });
