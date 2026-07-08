@@ -1,0 +1,121 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DropShadowEffect x:Key="StatusShadow"
+                      BlurRadius="18"
+                      Direction="270"
+                      ShadowDepth="3"
+                      Color="#22000000"
+                      Opacity="0.35" />
+
+    <DrawingImage x:Key="StatusAsset.ChineseInput">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FF2F7D68">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,16" RadiusX="15" RadiusY="15" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="8,10,16,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="14,7,4,18" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="9,18,14,3" RadiusX="1" RadiusY="1" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="StatusAsset.ChineseImeEnglish">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FF4F6F8F">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,16" RadiusX="15" RadiusY="15" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="8,10,5,12" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="8,10,12,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="8,15,10,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="8,20,12,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="22,10,3,13" RadiusX="1" RadiusY="1" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="StatusAsset.EnglishLower">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FF6C7177">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,16" RadiusX="15" RadiusY="15" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="9,11,4,12" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="9,11,11,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="9,16,9,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="9,21,11,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="22,11,3,13" RadiusX="1" RadiusY="1" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="StatusAsset.EnglishUpper">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FF3F4651">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,16" RadiusX="15" RadiusY="15" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="8,21,4,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="20,21,4,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="10,15,12,3" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="10,9,4,14" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="18,9,4,14" RadiusX="1" RadiusY="1" />
+                            <RectangleGeometry Rect="12,8,8,3" RadiusX="1" RadiusY="1" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="StatusAsset.Unknown">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FF9A8E7C">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="16,16" RadiusX="15" RadiusY="15" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <EllipseGeometry Center="16,22.5" RadiusX="1.7" RadiusY="1.7" />
+                            <RectangleGeometry Rect="14.5,8,3,10" RadiusX="1.5" RadiusY="1.5" />
+                            <RectangleGeometry Rect="13,8,6,3" RadiusX="1.5" RadiusY="1.5" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+</ResourceDictionary>

@@ -1,0 +1,27 @@
+# Build output
+bin/
+obj/
+artifacts/
+
+# Local SDK/bootstrap files
+.dotnet/
+.dotnet-home/
+.tmp/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
