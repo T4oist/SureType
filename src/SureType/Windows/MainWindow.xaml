@@ -26,7 +26,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ListBox x:Name="SectionList" SelectionChanged="SectionList_SelectionChanged" SelectedIndex="0" Background="Transparent" BorderThickness="0">
+            <ListBox x:Name="SectionList" SelectionChanged="SectionList_SelectionChanged" Background="Transparent" BorderThickness="0">
                 <ListBoxItem Content="Guide" Padding="10" />
                 <ListBoxItem Content="Position" Padding="10" />
                 <ListBoxItem Content="Timing" Padding="10" />

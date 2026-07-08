@@ -22,6 +22,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         LoadLegend();
         LoadSettings();
+        SectionList.SelectedIndex = 0;
         ShowSection(0);
     }
 
@@ -63,6 +64,11 @@ public partial class MainWindow : Window
 
     private void ShowSection(int index)
     {
+        if (GuidePanel is null || PositionPanel is null || TimingPanel is null || StylePanel is null)
+        {
+            return;
+        }
+
         GuidePanel.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
         PositionPanel.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
         TimingPanel.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
