@@ -34,7 +34,7 @@ public sealed class TrayService : IDisposable
 
         _notifyIcon = new Forms.NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = LoadTrayIcon(),
             Text = "SureType",
             Visible = true,
             ContextMenuStrip = new Forms.ContextMenuStrip()
@@ -48,6 +48,18 @@ public sealed class TrayService : IDisposable
         _notifyIcon.DoubleClick += (_, _) => OpenMainWindow();
     }
 
+    private static Icon LoadTrayIcon()
+    {
+        var resource = System.Windows.Application.GetResourceStream(new Uri("Resources/AppIcon.ico", UriKind.Relative));
+        if (resource is null)
+        {
+            return SystemIcons.Application;
+        }
+
+        using var stream = resource.Stream;
+        using var icon = new Icon(stream);
+        return (Icon)icon.Clone();
+    }
     public void OpenMainWindow()
     {
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
