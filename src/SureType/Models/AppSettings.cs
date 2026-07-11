@@ -31,8 +31,6 @@ public sealed class AppSettings
     private LogoStyle _logoStyle = LogoStyle.Filled;
     private AppLanguage _language = AppLanguage.Chinese;
 
-    public event EventHandler? Changed;
-
     public double OverlayDurationSeconds
     {
         get => _overlayDurationSeconds;
@@ -83,6 +81,5 @@ public sealed class AppSettings
         }
 
         field = value;
-        Changed?.Invoke(this, EventArgs.Empty);
     }
 }

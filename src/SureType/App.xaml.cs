@@ -6,7 +6,6 @@ namespace SureType;
 
 public partial class App : System.Windows.Application
 {
-    private AppSettings? _settings;
     private InputStateService? _inputStateService;
     private OverlayWindow? _overlayWindow;
     private TrayService? _trayService;
@@ -15,10 +14,10 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
-        _settings = new AppSettings();
-        _overlayWindow = new OverlayWindow(_settings);
-        _inputStateService = new InputStateService(new Win32InputStateReader(), _settings);
-        _trayService = new TrayService(_settings, _inputStateService, _overlayWindow);
+        var settings = new AppSettings();
+        _overlayWindow = new OverlayWindow(settings);
+        _inputStateService = new InputStateService(new Win32InputStateReader(), settings);
+        _trayService = new TrayService(settings, _inputStateService, _overlayWindow);
 
         _inputStateService.StateChanged += (_, args) =>
         {

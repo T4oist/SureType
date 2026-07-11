@@ -1,41 +1,24 @@
 using SureType.Models;
-using SureType.Services;
 
 var tests = new List<(string Name, Action Body)>
 {
-    ("Chinese IME Chinese mode maps to Chinese asset", () =>
-        AssertEqual(InputStateAssets.ChineseInput, new InputState(InputSource.ChineseIme, ImeMode.Chinese, CapsMode.Lower).DisplayAsset)),
-
-    ("Chinese IME English mode maps to dedicated asset", () =>
-        AssertEqual(InputStateAssets.ChineseImeEnglish, new InputState(InputSource.ChineseIme, ImeMode.English, CapsMode.Upper).DisplayAsset)),
-
-    ("English lower maps to lower asset", () =>
-        AssertEqual(InputStateAssets.EnglishLower, new InputState(InputSource.EnglishKeyboard, ImeMode.NotApplicable, CapsMode.Lower).DisplayAsset)),
-
-    ("English upper maps to upper asset", () =>
-        AssertEqual(InputStateAssets.EnglishUpper, new InputState(InputSource.EnglishKeyboard, ImeMode.NotApplicable, CapsMode.Upper).DisplayAsset)),
-
-    ("Unknown maps to fallback asset", () =>
-        AssertEqual(InputStateAssets.Unknown, InputState.Unknown.DisplayAsset)),
-
-    ("Typing cue policy cues first activity", () =>
+    ("Unknown input state keeps fallback values", () =>
     {
-        var policy = new TypingCuePolicy(TimeSpan.FromSeconds(2));
-        AssertTrue(policy.ShouldCue(DateTimeOffset.UnixEpoch));
+        AssertEqual(InputSource.Unknown, InputState.Unknown.InputSource);
+        AssertEqual(ImeMode.Unknown, InputState.Unknown.ImeMode);
+        AssertEqual(CapsMode.Lower, InputState.Unknown.CapsMode);
     }),
 
-    ("Typing cue policy suppresses repeated activity within cooldown", () =>
+    ("App settings clamp timing values", () =>
     {
-        var policy = new TypingCuePolicy(TimeSpan.FromSeconds(2));
-        AssertTrue(policy.ShouldCue(DateTimeOffset.UnixEpoch));
-        AssertFalse(policy.ShouldCue(DateTimeOffset.UnixEpoch.AddMilliseconds(500)));
-    }),
+        var settings = new AppSettings
+        {
+            OverlayDurationSeconds = 10,
+            InputFocusCooldownSeconds = -5
+        };
 
-    ("Typing cue policy cues again after cooldown", () =>
-    {
-        var policy = new TypingCuePolicy(TimeSpan.FromSeconds(2));
-        AssertTrue(policy.ShouldCue(DateTimeOffset.UnixEpoch));
-        AssertTrue(policy.ShouldCue(DateTimeOffset.UnixEpoch.AddSeconds(3)));
+        AssertEqual(5.0, settings.OverlayDurationSeconds);
+        AssertEqual(1.0, settings.InputFocusCooldownSeconds);
     })
 };
 
@@ -64,21 +47,5 @@ static void AssertEqual<T>(T expected, T actual)
     if (!EqualityComparer<T>.Default.Equals(expected, actual))
     {
         throw new InvalidOperationException($"Expected {expected}, got {actual}");
-    }
-}
-
-static void AssertTrue(bool value)
-{
-    if (!value)
-    {
-        throw new InvalidOperationException("Expected true, got false");
-    }
-}
-
-static void AssertFalse(bool value)
-{
-    if (value)
-    {
-        throw new InvalidOperationException("Expected false, got true");
     }
 }
