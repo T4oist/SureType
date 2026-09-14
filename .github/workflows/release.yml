@@ -1,0 +1,56 @@
+name: Release Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - installer/SureType.iss
+      - .github/workflows/release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\SureType.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $installer = "artifacts\SureType-0.2.1-Setup.exe"
+          if (!(Test-Path -LiteralPath $installer)) { throw "Installer was not created." }
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText(
+            "$installer.sha256",
+            "$hash  SureType-0.2.1-Setup.exe" + [Environment]::NewLine,
+            [Text.UTF8Encoding]::new($false)
+          )
+
+      - name: Publish GitHub Release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v0.2.1"
+          $assets = @(
+            "artifacts\SureType-0.2.1-Setup.exe",
+            "artifacts\SureType-0.2.1-Setup.exe.sha256",
+            "download\SureType-0.2.1.exe",
+            "download\SureType-0.2.1.exe.sha256"
+          )
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag @assets --clobber
+          } else {
+            gh release create $tag @assets --target "$env:GITHUB_SHA" --title "SureType 0.2.1" --notes "Windows 10/11 x64。推荐下载 SureType-0.2.1-Setup.exe；便携版可下载 SureType-0.2.1.exe。程序为自包含版本，无需另装 .NET。"
+          }
