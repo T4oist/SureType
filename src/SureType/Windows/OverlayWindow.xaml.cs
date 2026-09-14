@@ -6,143 +6,111 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using SureType.Models;
 using Forms = System.Windows.Forms;
-using MediaColor = System.Windows.Media.Color;
-using MediaBrushes = System.Windows.Media.Brushes;
-using InputImeMode = SureType.Models.ImeMode;
+using Color = System.Windows.Media.Color;
+using Point = System.Drawing.Point;
 
 namespace SureType.Windows;
 
 public partial class OverlayWindow : Window
 {
-    private const int GwlExstyle = -20;
-    private const int WsExTransparent = 0x00000020;
-    private const int WsExToolwindow = 0x00000080;
-    private const int WsExNoactivate = 0x08000000;
-    private const int OverlayMargin = 24;
-
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _hideTimer;
-
+    private int _generation;
     public OverlayWindow(AppSettings settings)
     {
         _settings = settings;
         InitializeComponent();
-        _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(_settings.OverlayDurationSeconds) };
+        _hideTimer = new DispatcherTimer();
         _hideTimer.Tick += (_, _) => FadeOut();
     }
-
     public void ShowState(InputState state)
     {
-        Dispatcher.Invoke(() =>
+        if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(() => ShowState(state)); return; }
+        var wasVisible = IsVisible;
+        ++_generation;
+        _hideTimer.Stop();
+        BeginAnimation(OpacityProperty, null);
+        var status = StatusPresentation.FromState(state);
+        StatusText.Text = status.Symbol;
+        CapsBadge.Visibility = status.CapsLock ? Visibility.Visible : Visibility.Collapsed;
+        var color = status.Symbol switch
         {
-            ApplyLogo(state);
-            PositionNearActiveScreen();
-
-            if (!IsVisible)
-            {
-                Show();
-            }
-
-            Visibility = Visibility.Visible;
-            _hideTimer.Stop();
-            _hideTimer.Interval = TimeSpan.FromSeconds(_settings.OverlayDurationSeconds);
-            BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(110)));
-            _hideTimer.Start();
+            "中" => Color.FromRgb(49, 93, 73),
+            "英" => Color.FromRgb(59, 89, 113),
+            "EN" => Color.FromRgb(83, 93, 105),
+            _ => Color.FromRgb(139, 110, 78)
+        };
+        StatusShell.Background = new SolidColorBrush(_settings.LogoStyle == LogoStyle.Filled ? color : Color.FromRgb(248, 250, 244));
+        StatusShell.BorderBrush = new SolidColorBrush(_settings.LogoStyle == LogoStyle.Mono ? Colors.Black : color);
+        StatusText.Foreground = new SolidColorBrush(_settings.LogoStyle switch
+        {
+            LogoStyle.Filled => Colors.White, LogoStyle.Mono => Colors.Black, _ => color
         });
+        Width = Height = _settings.OverlaySize;
+        var cursor = Forms.Cursor.Position;
+        var active = GetForegroundWindow();
+        var screen = _settings.OverlayPosition == OverlayPosition.NearMouse
+            ? Forms.Screen.FromPoint(cursor) : Forms.Screen.FromHandle(active);
+        if (!IsVisible) Show();
+        PositionOnScreen(screen, cursor);
+        BadgeScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        BadgeScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        BadgeScale.ScaleX = BadgeScale.ScaleY = 1;
+        if (SystemParameters.ClientAreaAnimation)
+        {
+            BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(100)));
+            var enter = new DoubleAnimation(wasVisible ? 0.96 : 0.88, 1, TimeSpan.FromMilliseconds(150))
+            {
+                FillBehavior = FillBehavior.Stop,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            BadgeScale.BeginAnimation(ScaleTransform.ScaleXProperty, enter);
+            BadgeScale.BeginAnimation(ScaleTransform.ScaleYProperty, enter);
+        }
+        else Opacity = 1;
+        _hideTimer.Interval = TimeSpan.FromSeconds(_settings.OverlayDurationSeconds);
+        _hideTimer.Start();
     }
-
+    public void HideImmediately()
+    {
+        ++_generation; _hideTimer.Stop(); BeginAnimation(OpacityProperty, null); Opacity = 0; Hide();
+    }
+    private void FadeOut()
+    {
+        _hideTimer.Stop();
+        if (!SystemParameters.ClientAreaAnimation) { HideImmediately(); return; }
+        var generation = _generation;
+        var animation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180));
+        animation.Completed += (_, _) => { if (generation == _generation) Hide(); };
+        BeginAnimation(OpacityProperty, animation);
+    }
+    protected override void OnClosed(EventArgs e) { ++_generation; _hideTimer.Stop(); base.OnClosed(e); }
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
         var hwnd = new WindowInteropHelper(this).Handle;
-        var style = GetWindowLong(hwnd, GwlExstyle);
-        SetWindowLong(hwnd, GwlExstyle, style | WsExTransparent | WsExToolwindow | WsExNoactivate);
-    }
-
-    private void ApplyLogo(InputState state)
-    {
-        var logo = LogoPresentation.FromState(state);
-        StatusText.Text = logo.Text;
-
-        switch (_settings.LogoStyle)
+        SetWindowLong(hwnd, -20, GetWindowLong(hwnd, -20) | 0x20 | 0x80 | 0x08000000);
+        HwndSource.FromHwnd(hwnd)?.AddHook((nint h, int msg, nint w, nint l, ref bool handled) =>
         {
-            case LogoStyle.Soft:
-                StatusShell.Background = new SolidColorBrush(logo.SoftBackground);
-                StatusShell.BorderBrush = new SolidColorBrush(logo.SoftBorder);
-                StatusShell.BorderThickness = new Thickness(1);
-                StatusShell.CornerRadius = new CornerRadius(16);
-                StatusText.Foreground = new SolidColorBrush(logo.FilledBackground);
-                break;
-            case LogoStyle.Mono:
-                StatusShell.Background = new SolidColorBrush(MediaColor.FromRgb(250, 250, 250));
-                StatusShell.BorderBrush = new SolidColorBrush(MediaColor.FromRgb(46, 50, 56));
-                StatusShell.BorderThickness = new Thickness(1.4);
-                StatusShell.CornerRadius = new CornerRadius(12);
-                StatusText.Foreground = new SolidColorBrush(MediaColor.FromRgb(34, 38, 43));
-                break;
-            default:
-                StatusShell.Background = new SolidColorBrush(logo.FilledBackground);
-                StatusShell.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(34, 0, 0, 0));
-                StatusShell.BorderThickness = new Thickness(1);
-                StatusShell.CornerRadius = new CornerRadius(14);
-                StatusText.Foreground = MediaBrushes.White;
-                break;
-        }
+            if (msg == 0x0084) { handled = true; return new nint(-1); }
+            if (msg == 0x0021) { handled = true; return new nint(3); }
+            return 0;
+        });
     }
-
-    private void FadeOut()
+    private void PositionOnScreen(Forms.Screen screen, Point cursor)
     {
-        _hideTimer.Stop();
-        var animation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(220));
-        animation.Completed += (_, _) => Visibility = Visibility.Hidden;
-        BeginAnimation(OpacityProperty, animation);
+        var center = new NativePoint(screen.Bounds.Left + screen.Bounds.Width / 2, screen.Bounds.Top + screen.Bounds.Height / 2);
+        var monitor = MonitorFromPoint(center, 2);
+        var scale = GetDpiForMonitor(monitor, 0, out var dpi, out _) == 0 ? dpi / 96.0 : 1.0;
+        var size = (int)Math.Round(_settings.OverlaySize * scale);
+        var point = OverlayPlacement.Calculate(screen.WorkingArea, cursor, size, (int)Math.Round(20 * scale), _settings.OverlayPosition);
+        SetWindowPos(new WindowInteropHelper(this).Handle, new nint(-1), point.X, point.Y, size, size, 0x0010);
     }
-
-    private void PositionNearActiveScreen()
-    {
-        var activeWindow = GetForegroundWindow();
-        var screen = activeWindow == nint.Zero
-            ? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0]
-            : Forms.Screen.FromHandle(activeWindow);
-
-        var bounds = screen.WorkingArea;
-        var source = PresentationSource.FromVisual(this);
-        var dpiScaleX = source?.CompositionTarget?.TransformFromDevice.M11 ?? 1.0;
-        var dpiScaleY = source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
-
-        var left = _settings.OverlayPosition is OverlayPosition.TopLeft or OverlayPosition.BottomLeft
-            ? bounds.Left * dpiScaleX + OverlayMargin
-            : bounds.Right * dpiScaleX - Width - OverlayMargin;
-
-        var top = _settings.OverlayPosition is OverlayPosition.TopLeft or OverlayPosition.TopRight
-            ? bounds.Top * dpiScaleY + OverlayMargin
-            : bounds.Bottom * dpiScaleY - Height - OverlayMargin;
-
-        Left = left;
-        Top = top;
-    }
-
-    private sealed record LogoPresentation(string Text, MediaColor FilledBackground, MediaColor SoftBackground, MediaColor SoftBorder)
-    {
-        public static LogoPresentation FromState(InputState state)
-        {
-            return (state.InputSource, state.ImeMode, state.CapsMode) switch
-            {
-                (InputSource.ChineseIme, InputImeMode.Chinese, _) => new("CN", MediaColor.FromRgb(46, 125, 103), MediaColor.FromRgb(232, 246, 241), MediaColor.FromRgb(160, 213, 196)),
-                (InputSource.ChineseIme, InputImeMode.English, _) => new("EN", MediaColor.FromRgb(73, 108, 138), MediaColor.FromRgb(233, 241, 248), MediaColor.FromRgb(166, 193, 216)),
-                (InputSource.EnglishKeyboard, _, CapsMode.Upper) => new("A", MediaColor.FromRgb(62, 69, 79), MediaColor.FromRgb(239, 241, 244), MediaColor.FromRgb(177, 184, 193)),
-                (InputSource.EnglishKeyboard, _, _) => new("en", MediaColor.FromRgb(102, 109, 117), MediaColor.FromRgb(242, 244, 246), MediaColor.FromRgb(189, 195, 202)),
-                _ => new("?", MediaColor.FromRgb(139, 129, 117), MediaColor.FromRgb(246, 242, 237), MediaColor.FromRgb(207, 193, 177))
-            };
-        }
-    }
-
-    [DllImport("user32.dll")]
-    private static extern nint GetForegroundWindow();
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern int GetWindowLong(nint hWnd, int nIndex);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern int SetWindowLong(nint hWnd, int nIndex, int dwNewLong);
+    [StructLayout(LayoutKind.Sequential)] private readonly record struct NativePoint(int X, int Y);
+    [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern int GetWindowLong(nint hwnd, int index);
+    [DllImport("user32.dll")] private static extern int SetWindowLong(nint hwnd, int index, int value);
+    [DllImport("user32.dll")] private static extern bool SetWindowPos(nint hwnd, nint after, int x, int y, int width, int height, uint flags);
+    [DllImport("user32.dll")] private static extern nint MonitorFromPoint(NativePoint point, uint flags);
+    [DllImport("shcore.dll")] private static extern int GetDpiForMonitor(nint monitor, int type, out uint x, out uint y);
 }

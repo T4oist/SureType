@@ -6,79 +6,64 @@ namespace SureType.Services;
 public sealed class InputFocusHook : IDisposable
 {
     private readonly Action _onInputFocused;
-    private bool _started;
-    private bool _disposed;
-
-    public InputFocusHook(Action onInputFocused)
-    {
-        _onInputFocused = onInputFocused;
-    }
-
+    private readonly ManualResetEventSlim _stop = new();
+    private Thread? _thread;
+    private volatile bool _disposed;
+    private readonly int _processId = Environment.ProcessId;
+    public InputFocusHook(Action onInputFocused) => _onInputFocused = onInputFocused;
     public void Start()
     {
-        if (_started)
+        if (_thread != null || _disposed) return;
+        _thread = new Thread(() =>
         {
-            return;
-        }
-
-        Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
-        _started = true;
+            var subscribed = false;
+            try
+            {
+                Automation.AddAutomationFocusChangedEventHandler(OnFocusChanged);
+                subscribed = true;
+                _stop.Wait();
+            }
+            catch (Exception ex) when (ex is COMException or InvalidOperationException) { }
+            finally
+            {
+                if (subscribed)
+                {
+                    try { Automation.RemoveAutomationFocusChangedEventHandler(OnFocusChanged); }
+                    catch (Exception ex) when (ex is COMException or InvalidOperationException) { }
+                }
+                _stop.Dispose();
+            }
+        }) { IsBackground = true, Name = "SureType focus events" };
+        _thread.SetApartmentState(ApartmentState.MTA);
+        _thread.Start();
     }
-
     private void OnFocusChanged(object sender, AutomationFocusChangedEventArgs e)
     {
-        if (_disposed || sender is not AutomationElement element)
-        {
-            return;
-        }
-
-        if (IsTextInputElement(element))
-        {
-            _onInputFocused();
-        }
-    }
-
-    private static bool IsTextInputElement(AutomationElement element)
-    {
+        if (_disposed || sender is not AutomationElement element) return;
         try
         {
-            var controlType = element.Current.ControlType;
-            if (controlType == ControlType.Edit ||
-                controlType == ControlType.Document ||
-                controlType == ControlType.ComboBox)
+            var current = element.Current;
+            if (current.ProcessId == _processId || !current.IsEnabled || current.IsOffscreen) return;
+            if (element.TryGetCurrentPattern(ValuePattern.Pattern, out var pattern))
             {
-                return true;
+                if (!((ValuePattern)pattern).Current.IsReadOnly) _onInputFocused();
+                return;
             }
-
-            return element.TryGetCurrentPattern(ValuePattern.Pattern, out _) ||
-                   element.TryGetCurrentPattern(TextPattern.Pattern, out _);
+            if (element.TryGetCurrentPattern(TextPattern.Pattern, out var textPattern))
+            {
+                var readOnly = ((TextPattern)textPattern).DocumentRange.GetAttributeValue(TextPattern.IsReadOnlyAttribute);
+                if (readOnly is false) _onInputFocused();
+                return;
+            }
+            if (current.ControlType == ControlType.Edit) _onInputFocused();
         }
-        catch (ElementNotAvailableException)
-        {
-            return false;
-        }
-        catch (InvalidOperationException)
-        {
-            return false;
-        }
-        catch (COMException)
-        {
-            return false;
-        }
+        catch (Exception ex) when (ex is ElementNotAvailableException or InvalidOperationException or COMException) { }
     }
-
     public void Dispose()
     {
-        if (_disposed)
-        {
-            return;
-        }
-
+        if (_disposed) return;
         _disposed = true;
-        if (_started)
-        {
-            Automation.RemoveAutomationFocusChangedEventHandler(OnFocusChanged);
-            _started = false;
-        }
+        if (_thread == null) _stop.Dispose();
+        else { try { _stop.Set(); } catch (ObjectDisposedException) { } _thread.Join(500); }
     }
 }

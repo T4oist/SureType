@@ -1,11 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <Version>0.2.1</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- WPF requires DPI awareness in the manifest; WinForms is used only for the tray. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
     <AssemblyName>SureType</AssemblyName>
     <RootNamespace>SureType</RootNamespace>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

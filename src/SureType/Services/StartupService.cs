@@ -4,33 +4,30 @@ namespace SureType.Services;
 
 public static class StartupService
 {
-    private const string AppName = "SureType";
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-
+    private static string Command => $"\"{Environment.ProcessPath}\" --startup";
     public static bool IsEnabled()
     {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: false);
-        return key?.GetValue(AppName) is string value && !string.IsNullOrWhiteSpace(value);
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
+            return string.Equals(key?.GetValue("SureType") as string, Command, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or System.IO.IOException) { return false; }
     }
-
-    public static void SetEnabled(bool enabled)
+    public static bool SetEnabled(bool enabled)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true)
-            ?? Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);
-
-        if (enabled)
+        try
         {
-            var executablePath = Environment.ProcessPath;
-            if (string.IsNullOrWhiteSpace(executablePath))
+            using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);
+            if (enabled)
             {
-                return;
+                if (string.IsNullOrWhiteSpace(Environment.ProcessPath)) return false;
+                key.SetValue("SureType", Command);
             }
-
-            key.SetValue(AppName, $"\"{executablePath}\"");
+            else key.DeleteValue("SureType", false);
+            return IsEnabled() == enabled;
         }
-        else
-        {
-            key.DeleteValue(AppName, throwOnMissingValue: false);
-        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or System.IO.IOException) { return false; }
     }
 }

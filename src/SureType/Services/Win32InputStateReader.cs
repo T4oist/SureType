@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Runtime.InteropServices;
 using SureType.Models;
 using InputImeMode = SureType.Models.ImeMode;
@@ -7,79 +6,42 @@ namespace SureType.Services;
 
 public sealed class Win32InputStateReader : IInputStateReader
 {
-    private const int VkCapital = 0x14;
-    private const int WmImeControl = 0x0283;
-    private const int ImcGetConversionMode = 0x0001;
-    private const int ImeCmodeNative = 0x0001;
-    private const int LangChinesePrimary = 0x04;
-    private const int LangEnglishPrimary = 0x09;
-
     public InputState ReadCurrentState()
     {
         var hwnd = GetForegroundWindow();
-        if (hwnd == nint.Zero)
-        {
-            return InputState.Unknown;
-        }
-
-        var capsMode = IsCapsLockOn() ? CapsMode.Upper : CapsMode.Lower;
-        var threadId = GetWindowThreadProcessId(hwnd, out _);
-        var keyboardLayout = GetKeyboardLayout(threadId);
-        var languageId = unchecked((ushort)((long)keyboardLayout & 0xffff));
-        var primaryLanguageId = languageId & 0x3ff;
-
-        if (primaryLanguageId == LangChinesePrimary)
-        {
-            return new InputState(InputSource.ChineseIme, ReadImeMode(hwnd), capsMode);
-        }
-
-        if (primaryLanguageId == LangEnglishPrimary)
-        {
-            return new InputState(InputSource.EnglishKeyboard, InputImeMode.NotApplicable, capsMode);
-        }
-
-        return new InputState(InputSource.Unknown, InputImeMode.Unknown, capsMode);
+        var caps = (GetKeyState(0x14) & 1) != 0 ? CapsMode.Upper : CapsMode.Lower;
+        if (hwnd == 0) return new(InputSource.Unknown, InputImeMode.Unknown, caps);
+        var thread = GetWindowThreadProcessId(hwnd, out _);
+        if (thread == 0) return new(InputSource.Unknown, InputImeMode.Unknown, caps);
+        var language = (long)GetKeyboardLayout(thread) & 0x3ff;
+        if (language == 9) return new(InputSource.EnglishKeyboard, InputImeMode.NotApplicable, caps);
+        if (language != 4) return new(InputSource.Unknown, InputImeMode.Unknown, caps);
+        var info = new GuiThreadInfo { Size = Marshal.SizeOf<GuiThreadInfo>() };
+        if (GetGUIThreadInfo(thread, ref info) && info.Focus != 0) hwnd = info.Focus;
+        var ime = ImmGetDefaultIMEWnd(hwnd);
+        if (ime == 0 || !Query(ime, 5, out var open))
+            return new(InputSource.ChineseIme, InputImeMode.Unknown, caps);
+        if (open == 0) return new(InputSource.ChineseIme, InputImeMode.English, caps);
+        var mode = Query(ime, 1, out var conversion)
+            ? ((conversion & 1) != 0 ? InputImeMode.Chinese : InputImeMode.English)
+            : InputImeMode.Unknown;
+        return new(InputSource.ChineseIme, mode, caps);
     }
-
-    private static InputImeMode ReadImeMode(nint hwnd)
+    internal static bool Query(nint hwnd, nint command, out nuint result) =>
+        SendMessageTimeout(hwnd, 0x0283, command, 0, 0x0002 | 0x0020, 100, out result) != 0;
+    [StructLayout(LayoutKind.Sequential)]
+    private struct GuiThreadInfo
     {
-        var imeWindow = ImmGetDefaultIMEWnd(hwnd);
-        if (imeWindow == nint.Zero)
-        {
-            return InputImeMode.Unknown;
-        }
-
-        var conversionMode = SendMessage(imeWindow, WmImeControl, ImcGetConversionMode, 0);
-        if (conversionMode == nint.Zero)
-        {
-            return InputImeMode.English;
-        }
-
-        return (((long)conversionMode & ImeCmodeNative) == ImeCmodeNative)
-            ? InputImeMode.Chinese
-            : InputImeMode.English;
+        public int Size, Flags;
+        public nint Active, Focus, Capture, MenuOwner, MoveSize, Caret;
+        public int Left, Top, Right, Bottom;
     }
-
-    private static bool IsCapsLockOn()
-    {
-        return (GetKeyState(VkCapital) & 0x0001) != 0;
-    }
-
-    [DllImport("user32.dll")]
-    private static extern nint GetForegroundWindow();
-
-    [DllImport("user32.dll")]
-    private static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
-
-    [DllImport("user32.dll")]
-    private static extern nint GetKeyboardLayout(uint idThread);
-
-    [DllImport("user32.dll")]
-    private static extern short GetKeyState(int nVirtKey);
-
-    [DllImport("imm32.dll")]
-    private static extern nint ImmGetDefaultIMEWnd(nint hWnd);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto)]
-    private static extern nint SendMessage(nint hWnd, int msg, nint wParam, nint lParam);
+    [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hwnd, out uint pid);
+    [DllImport("user32.dll")] private static extern nint GetKeyboardLayout(uint thread);
+    [DllImport("user32.dll")] private static extern short GetKeyState(int key);
+    [DllImport("user32.dll")] private static extern bool GetGUIThreadInfo(uint thread, ref GuiThreadInfo info);
+    [DllImport("imm32.dll")] private static extern nint ImmGetDefaultIMEWnd(nint hwnd);
+    [DllImport("user32.dll", EntryPoint = "SendMessageTimeoutW", SetLastError = true)]
+    private static extern nint SendMessageTimeout(nint hwnd, uint message, nint wParam, nint lParam, uint flags, uint timeout, out nuint result);
 }
